@@ -15,6 +15,7 @@
         "src/slider.js",
         "src/tapper.js",
         "src/hero.js",
-        "src/walker.js"
+        "src/walker.js",
+        "src/globals.js"
     ]
 }

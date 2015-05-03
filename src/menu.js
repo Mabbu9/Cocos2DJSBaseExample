@@ -80,9 +80,10 @@ var MainMenu = cc.Layer.extend({
 
 	},
 	onNewWalkerGame:function (pSender) {
-		var scene = new cc.Scene();
-		scene.addChild(new Walker());
-		cc.director.runScene(new cc.TransitionFade(1.2, scene));
+//		var scene = new cc.Scene();
+//		scene.addChild(new Walker());
+		cc.director.runScene(new cc.TransitionFade(1.2, Walker.scene()));
+//		cc.director.runScene(Walker.scene())
 
 	}
 });

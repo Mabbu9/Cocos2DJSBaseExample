@@ -1,35 +1,29 @@
 
 var Walker = cc.Layer.extend({
 	winSize:null,
-	_player:null,
+	hero:null,
+	space:null,
 	ctor:function(){
 		this._super();
+		this.winSize = cc.director.getWinSize();
+		this.initPhysics();
 		this.init();
+		
 	},
 	init:function(){
-		winSize = cc.director.getWinSize();
+		this._super();
 		var sp = new cc.Sprite(res.universe_png);
-		sp.x = winSize.width/2;
-		sp.y = winSize.height/2;
+		sp.x = this.winSize.width/2;
+		sp.y = this.winSize.height/2;
 		this.addChild(sp, 0, 1);
 
-		var newPlayer = new Hero();
-		newPlayer.doWalk();
-		var npWidth = newPlayer.width;
-		var npHeight = newPlayer.height;
-		var npScale = 1.0;
-		this._player = newPlayer
-		//this._player.x = npWidth*npScale/2;
-		this._player.x = winSize.width/2;
-		this._player.y = npHeight*npScale/2;
-		this._player.scale = npScale;
-
-		this.addChild(this._player, 1, 2);
-		
+		this.hero = new Hero(this.space);
+		//this.hero.doWalk();
+		this.addChild(this.hero, 1, 2);
 		
 		var infoLabel = cc.LabelTTF("Tap and Hold to Run");
-		infoLabel.x = winSize.width/2;
-		infoLabel.y = winSize.height/2;
+		infoLabel.x = this.winSize.width/2;
+		infoLabel.y = this.winSize.height/2;
 		this.addChild(infoLabel, 3, 3);
 		
 		
@@ -57,23 +51,62 @@ var Walker = cc.Layer.extend({
 				}
 			}, this);
 		}
+		
 	},
 	processEventBegan:function (event) {
-		//this._player.y = winSize.height/2;
-		this._player.stopWalk();
-		this._player.doRunning();
+		//this.hero.y = this.winSize.height/2;
+		var eventX = event.getLocation().x
+		cc.log(eventX + "   "+ this.winSize.width/2);
+		if(eventX < this.winSize.width/2) {
+			this.hero.changeDirection(-1);
+		} else {
+			this.hero.changeDirection(1);
+		}
+		//this.hero.stopWalk();
+		this.hero.doRunning();
 		
 	},
 	processEventEnded:function (event) {
-		//this._player.y = this._player.height*this._player.scale/2;
-		this._player.stopRunning();
-		this._player.doWalk();
+		//this.hero.y = this.hero.height*this.hero.scale/2;
+		//this.hero.stopRunning();
+		this.hero.doStand();
+		
+		//this.hero.doWalk();
+	},
+	initPhysics:function() {
+		//1. new space object 
+		this.space = new cp.Space();
+		//2. setup the  Gravity
+		this.space.gravity = cp.v(0, -350);
+
+		// 3. set up Walls
+		var wallBottom = new cp.SegmentShape(this.space.staticBody,
+				cp.v(0, g_groundHeight),// start point
+				//cp.v(4294967295, g_groundHeight),// MAX INT:4294967295
+				cp.v(this.winSize.width, g_groundHeight),// MAX INT:4294967295
+				0);// thickness of wall
+		this.space.addStaticShape(wallBottom);
+		var wallLeft = new cp.SegmentShape(this.space.staticBody,
+				cp.v(0, g_groundHeight),// start point
+				cp.v(0, this.winSize.height - g_groundHeight),        // MAX INT:4294967295
+				0);// thickness of wall
+		this.space.addStaticShape(wallLeft);
+		var wallRight = new cp.SegmentShape(this.space.staticBody,
+				cp.v(this.winSize.width, g_groundHeight),// start point
+				cp.v(this.winSize.width, this.winSize.height - g_groundHeight),       // MAX INT:4294967295
+				0);// thickness of wall
+		this.space.addStaticShape(wallRight);
+	},
+	update:function (dt) {
+		//cc.log("update in walker called "+dt)
+		this.space.step(dt);
 	}
 });
 
 Walker.scene = function () {
 	var scene = new cc.Scene();
 	var layer = new Walker();
+	layer.scheduleUpdate(); ///THIS IS needed for updating the physics space in the layer...
 	scene.addChild(layer);
 	return scene;
 };
